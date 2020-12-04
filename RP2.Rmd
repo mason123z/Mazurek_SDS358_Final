@@ -1,0 +1,120 @@
+---
+title: "RP #2"
+author: "Mason Mazurek"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rp2 <- read.csv("sds358proj.csv")
+mydata <- rp2[c(1:18)]
+library(tidyverse)
+library(matrixStats)
+```
+
+## Data Snippet
+
+```{r show, layout="l-body-outset"}
+library(knitr)
+kable(head(mydata))
+```
+
+## Exploratory Data Analysis
+
+# Correlation Table
+```{r cor}
+cor(mydata[3:18])
+```
+
+# Mean and SD's
+```{r mean}
+colMeans(mydata[3:18])
+```
+```{r sd}
+apply(mydata[3:18], 2, sd)
+```
+```{r range}
+apply(mydata[3:18], 2, range)
+```
+# Plots:
+
+```{r w, echo=FALSE}
+ggplot(rp2, aes(x=W)) +geom_histogram(bins = 10) + labs(title ="Distribution of Wins")
+```
+
+Unimodal, mean 80, range 40-110
+
+```{r ERA, echo=FALSE}
+ggplot(rp2, aes(x=ERA)) +geom_histogram(bins = 10) + labs(title ="Distribution of Earned Runs Allowed")
+```
+Unimodal, Mean 4, Range 2.5-5.5
+
+```{r SV, echo=FALSE}
+ggplot(rp2, aes(x=SV)) +geom_histogram(bins = 10) + labs(title ="Distribution of Saves credited to Pitcher")
+```
+Unimodal, Mean 40, Range 20-70
+
+```{r IP, echo=FALSE}
+ggplot(rp2, aes(x=IP)) +geom_histogram(bins = 10) + labs(title ="Distribution of Innings Pitched By Pitcher")
+```
+Unimodal, Slight Left Skew, Range 1410-1495, M ean 1445
+
+```{r H, echo=FALSE}
+ggplot(rp2, aes(x=H)) +geom_histogram(bins = 10) + labs(title ="Distribution of Hits allowed")
+```
+Unimodal, Mean 1400, Range 1100-1700
+
+```{r R, echo=FALSE}
+ggplot(rp2, aes(x=R)) +geom_histogram(bins = 10) + labs(title ="Distribution of Runs allowed")
+```
+Unimodal Slight Left Skew, Range 500-900, Mean 700
+
+```{r ER, echo=FALSE}
+ggplot(rp2, aes(x=ER)) +geom_histogram(bins = 10) + labs(title ="Distribution of Earned Runs allowed")
+```
+Unimodal, Mean 640, Range 450-900
+
+```{r HR, echo=FALSE}
+ggplot(rp2, aes(x=HR)) +geom_histogram(bins = 10) + labs(title ="Distribution of Home Runs allowed")
+```
+Unimodal, Slight Left Skew, Mean 175, Range 100-275
+
+```{r BB, echo=FALSE}
+ggplot(rp2, aes(x=BB)) +geom_histogram(bins = 10) + labs(title ="Distribution of Base Walks")
+```
+Unimodal, Mean 480, Range 300-700
+
+```{r SO, echo=FALSE}
+ggplot(rp2, aes(x=SO)) +geom_histogram(bins = 10) + labs(title ="Distribution of Strikeouts")
+```
+Unimodal, Mean 1275, Range 1000-1700
+
+```{r AVG, echo=FALSE}
+ggplot(rp2, aes(x=AVG)) +geom_histogram(bins = 10) + labs(title ="Distribution of Average Hits Per Game")
+```
+Unimodal, Mean .250, range .2-.3
+
+```{r AB, echo=FALSE}
+ggplot(rp2, aes(x=AB)) +geom_histogram(bins = 10) + labs(title ="Distribution of At Bats")
+```
+Unimodal, Very slight Right Skew, Mean 5500, Range 5300-5700
+
+```{r RBI, echo=FALSE}
+ggplot(rp2, aes(x=RBI)) +geom_histogram(bins = 10) + labs(title ="Distribution of Runs from Batting")
+```
+Unimodal, Mean 675, Range 500-900
+
+```{r CS, echo=FALSE}
+ggplot(rp2, aes(x=CS)) +geom_histogram(bins = 10) + labs(title ="Distribution of Put Outs")
+```
+Unimodal, Slight Left Skew, Range 10-70, Mean 35
+
+```{r OBP, echo=FALSE}
+ggplot(rp2, aes(x=OBP)) +geom_histogram(bins = 10) + labs(title ="Distribution of On-Base Percentages")
+```
+Unimodal, Slight Left Skew, Mean = .315, Range .29-.35
+
+```{r SLG, echo=FALSE}
+ggplot(rp2, aes(x=SLG)) +geom_histogram(bins = 10) + labs(title ="Distribution of Slugging Percentage")
+```
+Unimodal, Mean .4, Range .34-.46

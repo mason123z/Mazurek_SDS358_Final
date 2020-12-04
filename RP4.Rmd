@@ -1,0 +1,132 @@
+---
+title: 'RP 3'
+author: "Mason Mazurek"
+date: "11/19/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rp3 <- read.csv("sds358proj.csv")
+mydata <- rp3[c(1:18)]
+library(tidyverse)
+library(matrixStats)
+library(car)
+library(psych)
+library(leaps)
+vars <- c("W","League","ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","RBI","CS","OBP","SLG")
+pred1 <- c("ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","RBI","CS","OBP","SLG")
+pred2 <- c("W","ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","CS","OBP","SLG")
+```
+## Forward Stepwise
+
+```{r}
+# Fit an empty model with only the response
+FitStart <-lm(W ~ 1, mydata)
+# Fit a full model with all predictors
+FitAll <-lm(W ~ League+ERA+SV+IP+H+R+ER+HR+BB+SO+AVG+AB+RBI+CS+OBP+SLG,mydata)
+# Run the stepwise regression with forward selection based on the AIC criterion
+step(FitStart,direction="forward", scope =formula(FitAll))
+```
+
+After running the forward stepwise selection function, we have the following model as its output:
+W = -20.61047-0.06799(R)+0.08662(RBI)+0.41163(SV)+0.06002(IP)-0.00911(H)
+
+## Backwards Stepwise
+
+```{r backwards}
+# Run the stepwise regression with forward selection based on the AIC criterion 
+step(FitAll,direction="backward", scope =formula(FitStart))
+```
+After running the backward stepwise selection function, we have the following model as its output:
+W = -20.61047-0.06799(R)+0.08662(RBI)+0.41163(SV)+0.06002(IP)-0.00911(H)
+
+This is the same model as forward stepwise.
+
+#Best Subsets
+
+```{r best sub}
+# Find the best model for each number of predictors 
+models <- regsubsets(W ~ League+ERA+SV+IP+H+R+ER+HR+BB+SO+AVG+AB+RBI+CS+OBP+SLG,mydata, nvmax = 15)
+models.sum <- summary(models)
+# Create four plots within a 2x2 frame to compare the different criteria
+par(mfrow = c(2,2))
+ # SSE
+ plot(models.sum$rss, xlab = "Number of predictors", ylab = "SSE", type = "l")
+ # R2
+ plot(models.sum$adjr2, xlab = "Number of predictors", ylab = "Adjusted RSq", type = "l")
+ # Mallow's Cp
+ plot(models.sum$cp, xlab = "Number of predictors", ylab = "Cp", type = "l")
+ # BIC
+ plot(models.sum$bic, xlab = "Number of predictors", ylab = "BIC", type = "l")
+```
+
+Since we are trying to minimize SSE, Cp, and BIC while minimizing Adj R^2, the model with 3 variables seems to be the model that achieves the most maximization while not overfitting many variables.
+
+```{r q5}
+#Displays the best model for each number of predictors
+models.sum$outmat
+```
+As such the model selected by best subsets has the variables R, RBI and SV.
+```{r submodel, include= FALSE}
+#model selected by best subsets and creates the stepwise model
+subset <- lm(W ~ R + RBI + SV, mydata)
+stepwise <- lm(W ~ R + RBI + SV + H +IP, mydata)
+```
+Best Subset Model:
+W = 61.077 - .0812(R) + .0894(RBI) + .4091(SV)
+
+## Assumptions
+
+Since we have two models, we must evaluate them based on their assumptions.
+
+### Stepwise Assumption Evaluation
+
+```{r stepreg}
+# Fit the model obtained from forward selection (same in this case)
+mydata$resids <- residuals(stepwise)
+mydata$predicted <- predict(stepwise)
+ggplot(mydata, aes(x=predicted, y=resids)) + geom_point() + geom_hline(yintercept=0, color = "blue") +
+ labs(title ="Residuals versus Fitted values for forward selection",
+      x = "Fitted values", y = "Residuals")
+```
+The residuals versus fitted values shows no violation of the equal variance or linearity assumption. The residuals appear to be evenly distributed across the fitted values, there are no trends present in the residuals and there are no obvious outliers.
+```{r}
+
+ggplot(mydata, aes(sample = resids)) + stat_qq() + stat_qq_line() +
+ labs(title ="Normal probability plot for forward selection",
+      x = "Theoretical percentiles", y = "Sample percentiles")
+```
+The normal probability plot shows that the normality of residuals assumption appears to not be violated. While there is some fluctuation around the line there are no significant tails or trends that veer too significantly, thus signaling that the residuals are roughly normally distributed.
+
+Overall this model demonstrates that is has the characteristics needed to say that this model appears to fit the data. The diagnostics show no sign for alarm as all assumptions are validated.
+
+### Subsets Assumption Evaluation
+
+```{r subreg}
+# Fit the model obtained from forward selection (same in this case)
+mydata$resids <- residuals(subset)
+mydata$predicted <- predict(subset)
+ggplot(mydata, aes(x=predicted, y=resids)) + geom_point() + geom_hline(yintercept=0, color = "blue") +
+ labs(title ="Residuals versus Fitted values for forward selection",
+      x = "Fitted values", y = "Residuals")
+```
+The residuals versus fitted values shows no violation of the equal variance or linearity assumption. The residuals appear to be evenly distributed across the fitted values, there are no trends present in the residuals and there are no obvious outliers.
+```{r}
+ggplot(mydata, aes(sample = resids)) + stat_qq() + stat_qq_line() +
+ labs(title ="Normal probability plot for forward selection",
+      x = "Theoretical percentiles", y = "Sample percentiles")
+```
+The normal probability plot shows that the normality of residuals assumption appears to be violated. There is a slight veer off the line in both tails, albeit very minor. 
+
+This model does not violate the linearity or independence assumption but does slightly violate the normality assumption.
+
+### Model Selection
+
+Both models have very similar diagnostics but the subset model has a worse normality plot than the stepwise plot. As such, we will select the the stepwise equation as the final model.
+
+Final Model:
+
+W = -20.61047-0.06799(R)+0.08662(RBI)+0.41163(SV)+0.06002(IP)-0.00911(H)

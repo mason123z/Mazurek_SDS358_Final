@@ -1,0 +1,89 @@
+---
+title: 'RP 3'
+author: "Mason Mazurek"
+date: "11/19/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rp3 <- read.csv("sds358proj.csv")
+mydata <- rp3[c(1:18)]
+library(tidyverse)
+library(matrixStats)
+library(car)
+library(psych)
+vars <- c("W","League","ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","RBI","CS","OBP","SLG")
+pred1 <- c("ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","RBI","CS","OBP","SLG")
+pred2 <- c("W","ERA","SV","IP","H","R","ER","HR","BB","SO","AVG","AB","CS","OBP","SLG")
+```
+## Comparing Predictors to Response Variable for Question 1
+
+In the case of Research Question 1, our predictor would be W (Wins)
+
+```{r, fig.height= 4}
+par (mfrow = c(1,2))
+for (i in pred1){
+  plot(mydata[c(i,"W")])
+}
+```
+```{r}
+my_data <- mydata[, c(3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)]
+# print the first 6 rows
+head(cor(my_data), 1)
+```
+
+Based on the scatterplots and correlation coefficients we can identify some variables that might require a transformation. Variables such as CS and AB show very weak correlations when compared to the predictor, and will hopefully be eliminated when performing model selection. Variables such as ERA and OBP compared to W show slight curves that indicate a transformation might benefit the relationship, but overall most terms appear to be linearly correlated with the response variable.
+
+## Comparing Predictors to Response Variable for Question 2
+
+In the case of Research Question 2, our predictor would be RBI (Runs scored)
+
+```{r, fig.height= 4}
+par (mfrow = c(1,2))
+for (i in pred2){
+  plot(mydata[c(i,"RBI")])
+}
+
+
+```
+```{r}
+my_data <- mydata[, c(15,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18)]
+head(cor(my_data), 1)
+```
+
+Based on the scatterplots and correlation coefficients there appears to be no obvious candidates for transformation. However, the correlations between this variable and the predictors are lower compared to scenario one. There are two really strong variables OBP and SLG, most likeley because these variables capture the number of ball hits and percentage of time spent on base, conditions needed to score a run. 
+
+## Comparing all variables against each other
+
+To compare every variable against each other to find multicorrelation, we will calculate VIF's for each variable. To do so, we will build a model for both scenarios one and two that contain all variables in the dataset.
+
+```{r}
+model1 <- lm(W ~ League+ERA+SV+IP+H+R+ER+HR+BB+SO+AVG+AB+RBI+CS+OBP+SLG,mydata)
+model2 <- lm(RBI ~ League+ERA+SV+IP+H+R+ER+HR+BB+SO+AVG+AB+W+CS+OBP+SLG,mydata)
+vif(model1)
+vif(model2)
+```
+
+Both results show that there are some terms with high VIF values, especially ER and ERA. As such, upon running forward, backwards, and best subsets model selection in the final project, I will make sure to incorporate VIF testing when determining the best model for the project. If these model building methods have high VIF values I might be forced to remove a variable to reduce multicolinearity.
+
+## Model Building Strategy Demo
+
+I will demonstrate how I will run a forward stepwise selection in R for the final project. 
+
+```{r}
+# Fit an empty model with only the response
+FitStart <-lm(W ~ 1, mydata)
+# Fit a full model with all predictors
+FitAll <-lm(W ~ League+ERA+SV+IP+H+R+ER+HR+BB+SO+AVG+AB+RBI+CS+OBP+SLG,mydata)
+# Run the stepwise regression with forward selection based on the AIC criterion
+step(FitStart,direction="forward", scope =formula(FitAll))
+
+```
+
+After running the forward stepwise selection function, we have the following model as its output:
+W = -20.61047-0.06799(R)+0.08662(RBI)+0.41163(SV)+0.06002(IP)-0.00911(H)
+
+This would be the regression I would use to run diagnostics on and compare against the output for backward stepwise and best subset selection.
